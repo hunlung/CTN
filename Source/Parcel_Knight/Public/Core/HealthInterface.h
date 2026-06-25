@@ -24,6 +24,7 @@ class PARCEL_KNIGHT_API IHealthInterface
 
 public:
 	virtual float GetHP() const = 0;
+	virtual float GetMaxHP() const = 0;
 	
 	/**
 * @param Amount 회복량 —
