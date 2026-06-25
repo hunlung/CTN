@@ -31,10 +31,11 @@ feat/player-interaction
 feat/delivery-box
 feat/delivery-zone
 나쁜 예시:
-eat/player-movement
-feat/player-interaction
-feat/delivery-box
-feat/delivery-zone
+feat/PlayerMovement
+feat/player movement
+feat/내기능
+feat/test
+feat/asdf
 ```
 
 ## 커밋 메세지 규칙
