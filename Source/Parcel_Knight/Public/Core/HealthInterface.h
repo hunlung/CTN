@@ -23,23 +23,29 @@ class PARCEL_KNIGHT_API IHealthInterface
 	GENERATED_BODY()
 
 public:
+	// [All] HP 조회
 	virtual float GetHP() const = 0;
+	// [All] 최대 HP 조회
 	virtual float GetMaxHP() const = 0;
 	
 	/**
-* @param Amount 회복량 —
-* NOTE: 최대 체력을 초과하지 않도록 구현 측에서 클램프 필요
-* [Server Only] 체력 변경은 서버에서만 — 클라이언트에서 호출 시 무시됨
-* NOTE: 구현 측에서 HasAuthority() 체크 필수
-*/
+	 * @param Amount 회복량 — 구현 측에서 MaxHP 클램프 필요
+	 * [Server Only] 클라이언트에서 호출 시 HasAuthority() 체크 후 무시
+	 */
 	virtual void AddHP(float Amount) = 0;
+	
 	/**
-* @param Amount 감소량 —
-* NOTE: 최소 체력 이하로 떨어지지 않도록 구현 측에서 클램프 필요
-* [Server Only] 데미지 처리는 서버에서만 — 결과는 Replicated HP로 클라이언트에 전파
-*/
+ * @param Amount 감소량 — 결과는 Replicated HP로 클라이언트에 자동 전파
+ * [Server Only] 클라이언트에서 호출 시 HasAuthority() 체크 후 무시
+ */
 	virtual void TakeDamage(float Amount) = 0;
 	
-	// [Server Only] 체력이 0이 됐을 때 서버에서 호출 — 구현 측에서 Multicast RPC로 연출 전파
+	/**
+ * HP가 0이 됐을 때 호출 — 구현 측에서 Multicast RPC로 사망 연출 전파
+ * [Server Only] 래그돌·리스폰 등 사망 처리는 서버에서만 시작
+ */
+	virtual void OnDeath() = 0;
+	
+	// [All] 사망 여부
 	virtual bool IsDead() const = 0;
 };
