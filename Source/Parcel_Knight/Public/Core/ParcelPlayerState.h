@@ -18,7 +18,21 @@ UCLASS()
 class PARCEL_KNIGHT_API AParcelPlayerState : public APlayerState
 {
 	GENERATED_BODY()
+	
+public:
+	
+	AParcelPlayerState();
 
+	int32 GetPersonalScore() const;
+	int32 GetComboCount() const; 
+	int32 GetSuccessCount() const;
+	
+	void AddScore(int32 Amount);
+	
+	void OnDeliverySuccess();
+	
+	void OnDeliveryFail();
+	
 private:
 	UPROPERTY()
 	UPlayerStatComponent* PlayerStatComp;
