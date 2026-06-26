@@ -1,20 +1,30 @@
 #include "Delivery/DeliveryBox.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/BoxComponent.h"
 #include "Net/UnrealNetwork.h"
+//Todo: #include "UPakageDamageManager.h"
+
+DEFINE_LOG_CATEGORY(LogDelivery);
 
 ADeliveryBox::ADeliveryBox()
 {
-	PrimaryActorTick.bCanEverTick = false; // 호스트 PC 퍼포먼스를 위해 틱 비활성화
+	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
 	SetReplicateMovement(true); // 리슨 서버 물리 동기화 활성화
 
+	// 박스 콜리전 생성 >> 물리 바디 콜리전 세팅 >> Mesh 부착 후 자체 물리 Off
+	CollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("CollisionComponent"));
+	RootComponent = CollisionComponent;
+	
+	CollisionComponent->SetSimulatePhysics(true);
+	CollisionComponent->SetCollisionProfileName(TEXT("PhysicsBody"));
+	CollisionComponent->SetNotifyRigidBodyCollision(true);
+	
 	BoxMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BoxMesh"));
-	RootComponent = BoxMesh;
-
-	// 기본 무거운 물리 바디 콜리전 세팅
-	BoxMesh->SetSimulatePhysics(true);
-	BoxMesh->SetCollisionProfileName(TEXT("PhysicsBody"));
-    
+	BoxMesh->SetupAttachment(RootComponent);
+	BoxMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	BoxMesh->SetSimulatePhysics(false);
+	
 	BoxID = -1;
 }
 
@@ -22,7 +32,10 @@ void ADeliveryBox::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	//Todo : 물리적 충돌 이벤트
+	if (HasAuthority() && CollisionComponent)
+	{
+		CollisionComponent->OnComponentHit.AddDynamic(this, &ADeliveryBox::OnPhysicsHit);
+	}
 }
 
 void ADeliveryBox::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -41,26 +54,30 @@ void ADeliveryBox::InitializeBox(int32 InBoxID, const FBoxData& InBoxData)
 
 	BoxID = InBoxID;
 	BoxData = InBoxData;
-    
-	// 서버에서 StaticMesh 즉시 적용
-	if (BoxData.BoxMeshAsset)
+	
+	if (BoxData.BoxMeshAsset && BoxMesh && CollisionComponent)
 	{
 		BoxMesh->SetStaticMesh(BoxData.BoxMeshAsset);
 		// 무게 적용 (밸런싱 수치 조절 (현재 1.0f))
-		BoxMesh->SetMassOverrideInKg(NAME_None, BoxData.Weight * 1.0f, true);
+		CollisionComponent->SetMassOverrideInKg(NAME_None, BoxData.Weight * 1.0f, true);
 	}
-
-	// 초기 상태인 Spawned 태그 부여
+	// Spawned 태그 부여
 	AddStateTag(FGameplayTag::RequestGameplayTag(TEXT("Box.State.Spawned")));
+	
+	UE_LOG(LogDelivery, Log, TEXT("[Server] Box %d (Type: %s) Initialized and spawned successfully."), 
+		BoxID, *BoxData.BoxTypeTag.ToString());
 }
 
 void ADeliveryBox::OnRep_BoxData()
 {
 	// 클라이언트 측에서도 서버가 채워준 BoxData를 받으면 메시 외형을 동기화함
-	if (BoxData.BoxMeshAsset)
+	if (BoxData.BoxMeshAsset && BoxMesh)
 	{
 		BoxMesh->SetStaticMesh(BoxData.BoxMeshAsset);
 	}
+	
+	UE_LOG(LogDelivery, Display, TEXT("[Client] Received updated BoxStateTags for Box %d. Tags: %s"), 
+		BoxID, *BoxStateTags.ToString());
 }
 
 void ADeliveryBox::AddStateTag(FGameplayTag NewStateTag)
@@ -70,12 +87,12 @@ void ADeliveryBox::AddStateTag(FGameplayTag NewStateTag)
 	if (!BoxStateTags.HasTagExact(NewStateTag))
 	{
 		BoxStateTags.AddTag(NewStateTag);
-        
-		// 서버 측에서 상태 변경 시 즉각 처리할 물리 제어 규칙
+		
+		//플레이어가 상자를 들면 상자의 물리 규칙은 잠시 꺼야 함.
 		if (NewStateTag.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("Box.State.Held"))))
 		{
-			BoxMesh->SetSimulatePhysics(false);
-			BoxMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision); // 들려있을 땐 환경 충돌 무시
+			CollisionComponent->SetSimulatePhysics(false);
+			CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 	}
 }
@@ -91,8 +108,8 @@ void ADeliveryBox::RemoveStateTag(FGameplayTag StateTag)
 		// 상태가 제거될 때의 예외 복구 로직
 		if (StateTag.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("Box.State.Held"))))
 		{
-			BoxMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-			BoxMesh->SetSimulatePhysics(true);
+			CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+			CollisionComponent->SetSimulatePhysics(true);
 		}
 	}
 }
@@ -104,19 +121,19 @@ bool ADeliveryBox::HasStateTag(FGameplayTag StateTag) const
 
 void ADeliveryBox::OnRep_BoxStateTags()
 {
-	// 클라이언트 사이드 시각/청각 연출 분기점
+	// [Client] 시각/청각 연출 분기점
 	FGameplayTag HeldTag = FGameplayTag::RequestGameplayTag(TEXT("Box.State.Held"));
 	FGameplayTag DamagedTag = FGameplayTag::RequestGameplayTag(TEXT("Box.State.Damaged"));
 
 	if (BoxStateTags.HasTag(HeldTag))
 	{
-		BoxMesh->SetSimulatePhysics(false);
-		BoxMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		CollisionComponent->SetSimulatePhysics(false);
+		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 	else
 	{
-		BoxMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-		BoxMesh->SetSimulatePhysics(true);
+		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+		CollisionComponent->SetSimulatePhysics(true);
 	}
 
 	if (BoxStateTags.HasTag(DamagedTag))
@@ -126,7 +143,7 @@ void ADeliveryBox::OnRep_BoxStateTags()
 }
 
 /* ==========================================================================
-   IPKCarryable 인터페이스 실구현 부 Todo: Character와 연동 필요
+   ICarryable 인터페이스
    ========================================================================== */
 
 bool ADeliveryBox::CanCarry(AActor* Carrier)
@@ -161,4 +178,26 @@ void ADeliveryBox::OnDropped()
 	AddStateTag(FGameplayTag::RequestGameplayTag(TEXT("Box.State.Spawned")));
 }
 
-//Todo : OnPhysicsHit 물리적 충돌 구현
+void ADeliveryBox::OnPhysicsHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	if (!HasAuthority()) return;
+	if (HasStateTag(FGameplayTag::RequestGameplayTag(TEXT("Box.State.Damaged")))) return;
+	if (HasStateTag(FGameplayTag::RequestGameplayTag(TEXT("Box.State.Held")))) return;
+
+	float ImpactForce = NormalImpulse.Size();
+	if (ImpactForce < 100.0f) return;
+	
+	UE_LOG(LogDelivery, Warning, TEXT("[Server] Box %d Collision Detected! Counterpart: %s, Impact Force: %f"), 
+		BoxID, OtherActor ? *OtherActor->GetName() : TEXT("None"), ImpactForce);
+
+	if (UWorld* World = GetWorld())
+	{
+		// 5번 팀원의 매니저 서브시스템이 연결되면 사용
+		/*
+		if (UPackageDamageManager* DamageManager = World->GetSubsystem<UPackageDamageManager>())
+		{
+		   DamageManager->EvaluatePackageDamage(this, ImpactForce, OtherActor);
+		}
+		*/
+	}
+}
