@@ -19,6 +19,8 @@ public:
 	void PickUpBox(AActor* InBox);
 	void DropBox();
 
+	void ForceDropByTrap(float TrapDamage);
+
 private:
 	UPROPERTY()
 	AActor* CurrentCarryingBox;

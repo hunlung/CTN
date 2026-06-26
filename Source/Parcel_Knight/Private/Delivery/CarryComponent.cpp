@@ -2,6 +2,7 @@
 #include "Components/ActorComponent.h" 
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Delivery/DeliveryBox.h"
 
 UCarryComponent::UCarryComponent()
 {
@@ -26,7 +27,10 @@ void UCarryComponent::PickUpBox(AActor* InBox)
 
 	if (UCharacterMovementComponent* Movement = OwnerCharacter->GetCharacterMovement())
 	{
-		Movement->MaxWalkSpeed = 600.f * 0.6f;
+		if (ADeliveryBox* Box = Cast<ADeliveryBox>(InBox))
+		{
+			Movement->MaxWalkSpeed = 600.f * Box->GetBoxData().MoveSpeedMultiplier;
+		}
 	}
 }
 
@@ -41,9 +45,14 @@ void UCarryComponent::DropBox()
 	{
 		if (UCharacterMovementComponent* Movement = OwnerCharacter->GetCharacterMovement())
 		{
-			Movement->MaxWalkSpeed = 600.f; 
+			Movement->MaxWalkSpeed = 600.f; // 원상복구
 		}
 	}
 
 	CurrentCarryingBox = nullptr;
+}
+
+void UCarryComponent::ForceDropByTrap(float TrapDamage)
+{
+	DropBox();
 }

@@ -1,5 +1,6 @@
 #include "Delivery/InteractionComponent.h"
-#include "Delivery/Interactable.h"
+#include "Delivery/Carryable.h"
+#include "Delivery/CarryComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerController.h"
 #include "CollisionQueryParams.h"
@@ -19,7 +20,6 @@ void UInteractionComponent::BeginPlay()
 void UInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
 	CheckTraceTarget();
 }
 
@@ -45,7 +45,7 @@ void UInteractionComponent::CheckTraceTarget()
 	{
 		AActor* HitActor = HitResult.GetActor();
 		
-		if (HitActor && HitActor->GetClass()->ImplementsInterface(UInteractable::StaticClass()))
+		if (HitActor && HitActor->GetClass()->ImplementsInterface(UCarryable::StaticClass()))
 		{
 			if (CurrentFocusedActor != HitActor)
 			{
@@ -54,7 +54,6 @@ void UInteractionComponent::CheckTraceTarget()
 			return;
 		}
 	}
-
 	CurrentFocusedActor = nullptr;
 }
 
@@ -65,9 +64,43 @@ void UInteractionComponent::PrimaryInteract()
 	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
 	if (!OwnerCharacter) return;
 
-	IInteractable* Interactable = Cast<IInteractable>(CurrentFocusedActor);
-	if (Interactable && Interactable->CanInteract(OwnerCharacter))
+	ICarryable* CarryableTarget = Cast<ICarryable>(CurrentFocusedActor);
+	if (CarryableTarget && CarryableTarget->CanCarry(OwnerCharacter))
 	{
-		Interactable->Interact(OwnerCharacter);
+		CarryableTarget->OnPickedUp(OwnerCharacter);
+
+		if (UCarryComponent* CarryComp = OwnerCharacter->FindComponentByClass<UCarryComponent>())
+		{
+			CarryComp->PickUpBox(CurrentFocusedActor);
+		}
+	}
+}
+
+bool UInteractionComponent::Server_RequestPrimaryInteract_Validate(AActor* TargetActor)
+{
+	if (!TargetActor) return false;
+	
+	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	if (!OwnerCharacter) return false;
+
+	float DistSq = FVector::DistSquared(OwnerCharacter->GetActorLocation(), TargetActor->GetActorLocation());
+	return DistSq <= FMath::Square(TraceDistance + 50.f);
+}
+
+void UInteractionComponent::Server_RequestPrimaryInteract_Implementation(AActor* TargetActor)
+{
+	ACharacter* OwnerCharacter = Cast<ACharacter>(GetOwner());
+	if (!OwnerCharacter || !TargetActor) return;
+
+	ICarryable* CarryableTarget = Cast<ICarryable>(TargetActor);
+	
+	if (CarryableTarget && CarryableTarget->CanCarry(OwnerCharacter))
+	{
+		CarryableTarget->OnPickedUp(OwnerCharacter);
+
+		if (UCarryComponent* CarryComp = OwnerCharacter->FindComponentByClass<UCarryComponent>())
+		{
+			CarryComp->PickUpBox(TargetActor);
+		}
 	}
 }

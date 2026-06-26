@@ -1,20 +1,19 @@
 #include "Delivery/PhysicsJudgeManager.h"
-// #include "DeliveryBox.h" // 박스 주석
+#include "Delivery/DeliveryBox.h"
 
 void UPhysicsJudgeManager::EvaluateImpact(ADeliveryBox* Box, float ImpactForce)
 {
 	if (!Box) return;
-
 	if (GetWorld() && GetWorld()->GetNetMode() == NM_Client) return;
 
-	float DamageThreshold = 500.f; 
+	float DamageThreshold = Box->GetDamageThreshold(); 
 
 	if (ImpactForce >= DamageThreshold)
 	{
-		// 택배박스 호출
-		// Box->SetBoxState(EBoxState::Damaged);
+		Box->AddStateTag(FGameplayTag::RequestGameplayTag(TEXT("Box.State.Damaged")));
 		
-		UE_LOG(LogTemp, Warning, TEXT("서버 판정: 택배 ID %d번이 %f의 충격으로 파손되었습니다!"), 1001, ImpactForce);
+		UE_LOG(LogTemp, Warning, TEXT("[Server] 서버 판정: 택배 ID %d번이 %f의 충격(임계값: %f)으로 파손되었습니다!"), 
+			Box->GetBoxID(), ImpactForce, DamageThreshold);
 	}
 }
 

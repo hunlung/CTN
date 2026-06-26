@@ -20,6 +20,10 @@ public:
 
 	void PrimaryInteract();
 
+protected:
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_RequestPrimaryInteract(AActor* TargetActor);
+
 private:
 	void CheckTraceTarget();
 
