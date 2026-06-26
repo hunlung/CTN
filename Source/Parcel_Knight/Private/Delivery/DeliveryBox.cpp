@@ -1,8 +1,8 @@
 #include "Delivery/DeliveryBox.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
+#include "Delivery/PhysicsJudgeManager.h"
 #include "Net/UnrealNetwork.h"
-//Todo: #include "UPakageDamageManager.h"
 
 DEFINE_LOG_CATEGORY(LogDelivery);
 
@@ -192,12 +192,9 @@ void ADeliveryBox::OnPhysicsHit(UPrimitiveComponent* HitComponent, AActor* Other
 
 	if (UWorld* World = GetWorld())
 	{
-		// 5번 팀원의 매니저 서브시스템이 연결되면 사용
-		/*
-		if (UPackageDamageManager* DamageManager = World->GetSubsystem<UPackageDamageManager>())
+		if (UPhysicsJudgeManager* DamageManager = World->GetSubsystem<UPhysicsJudgeManager>())
 		{
-		   DamageManager->EvaluatePackageDamage(this, ImpactForce, OtherActor);
+		   DamageManager->EvaluateImpact(this, ImpactForce);
 		}
-		*/
 	}
 }
