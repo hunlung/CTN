@@ -25,13 +25,42 @@ public:
 
 	// [Server Only] 택배 종류·콤보·감점을 반영한 최종 점수 반환
 	int32 CalculateScore();
+	
+	// [Server Only] GameMode::StartRound()에서 호출 — 타이머 시작
+	void StartRound();
+
+	// [Server Only] GameMode::EndRound()에서 호출 — 타이머 정지
+	void EndRound();
 
 private:
-	// 스테이지별로 DA_StageData에서 오버라이드 가능
+	// 스테이지 제한시간 — DA_StageData에서 설정
 	UPROPERTY()
 	float TimeLimit;
-
+	
 	// 이 점수 달성 시 클리어 판정 — DA_StageData에서 설정
 	UPROPERTY()
 	int32 TargetScore;
+	
+	// "초" 당 감소되는 점수
+	UPROPERTY()
+	int32 DecreaseScore;
+	
+	UPROPERTY()
+	//제한 시간 초과 시 감소되는 점수
+	int32 TimeUpScore;
+	// 1초 반복 타이머 핸들 — 시간 경과에 따른 점수 감소용
+	FTimerHandle RoundTimerHandle;
+
+	// 시간 만료 타이머 핸들 — TimeLimit 후 OnTimeUp 호출
+	FTimerHandle TimeUpHandle;
+
+	// [Server Only] 1초마다 호출 — 시간 경과 점수 감소 처리
+	//HACK: 다른 코드로 변경 가능할 수 있음
+	void OnEverySecond();
+	
+	/*
+	 * [Server Only] 제한시간 만료 시 호출 — 점수 대폭 감소
+	 *  HACK: 제한시간 만료시 라운드 종료 or 점수 대폭 감소 
+	*/
+	void OnTimeUp();
 };

@@ -2,8 +2,19 @@
 
 #include "Core/ParcelGameMode.h"
 
+#include "Core/DeliveryRuleComponent.h"
+#include "Core/ParcelGameState.h"
+#include "Core/ParcelPlayerController.h"
+#include "Core/ParcelPlayerState.h"
+
 AParcelGameMode::AParcelGameMode()
 {
+	GameStateClass = AParcelGameState::StaticClass();
+	PlayerStateClass = AParcelPlayerState::StaticClass();
+	PlayerControllerClass = AParcelPlayerController::StaticClass();
+	
+	DeliveryRuleComp = CreateDefaultSubobject<UDeliveryRuleComponent>("DeliveryRuleComponent");
+	
 }
 
 void AParcelGameMode::PostLogin(APlayerController* NewPlayer)
@@ -19,19 +30,21 @@ void AParcelGameMode::Logout(AController* Exiting)
 void AParcelGameMode::HandleMatchHasStarted()
 {
 	Super::HandleMatchHasStarted();
-	// TODO: StartRound() 호출 예정
+	StartRound();
 }
 
 void AParcelGameMode::HandleMatchHasEnded()
 {
 	Super::HandleMatchHasEnded();
-	// TODO: EndRound() 호출 예정
+	EndRound();
 }
 
 void AParcelGameMode::StartRound()
 {
+	DeliveryRuleComp->StartRound();
 }
 
 void AParcelGameMode::EndRound()
 {
+	DeliveryRuleComp->EndRound();
 }

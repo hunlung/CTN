@@ -6,7 +6,10 @@
 #include "GameFramework/GameMode.h"
 #include "ParcelGameMode.generated.h"
 
+class AParcelPlayerController;
+class AParcelPlayerState;
 class UDeliveryRuleComponent;
+class AParcelGameState;
 
 /**
  * 게임 룰을 관리하는 GameMode
@@ -35,4 +38,6 @@ protected:
 private:
 	UPROPERTY()
 	UDeliveryRuleComponent* DeliveryRuleComp;
+	
+	
 };

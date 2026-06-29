@@ -19,3 +19,22 @@ void UTeamScoreComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 void UTeamScoreComponent::OnRep_TeamScore()
 {
 }
+
+void UTeamScoreComponent::AddTeamScore(int32 Amount)
+{
+}
+
+void UTeamScoreComponent::DecreaseRemainingTime(float Amount)
+{
+}
+
+
+int32 UTeamScoreComponent::GetTeamScore() const
+{
+	return TeamScore;
+}
+
+float UTeamScoreComponent::GetRemainingTime() const
+{
+	return RemainingTime;
+}
