@@ -18,6 +18,10 @@ UCLASS()
 class PARCEL_KNIGHT_API AParcelGameState : public AGameState
 {
 	GENERATED_BODY()
+	
+public:
+	AParcelGameState();
+	UTeamScoreComponent* GetTeamScoreComponent() const;
 
 private:
 	UPROPERTY()

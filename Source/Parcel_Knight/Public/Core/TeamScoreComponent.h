@@ -25,6 +25,14 @@ public:
 	// [Multicast] TeamScore 변경 시 자동 호출 — 클라이언트 UI 갱신 트리거
 	UFUNCTION()
 	void OnRep_TeamScore();
+	// [All] 현재 팀 점수 반환
+	int32 GetTeamScore() const;
+	// [All] 남은 시간 반환
+	float GetRemainingTime() const;
+	// [Server Only] 팀 점수 증감
+	void AddTeamScore(int32 Amount);
+	// [Server Only] 남은 시간 감소 — OnEverySecond에서 호출
+	void DecreaseRemainingTime(float Amount);
 
 private:
 	// 모든 클라이언트에 복제 — UI 점수판 갱신용
