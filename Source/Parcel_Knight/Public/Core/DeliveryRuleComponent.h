@@ -55,6 +55,7 @@ private:
 	FTimerHandle TimeUpHandle;
 
 	// [Server Only] 1초마다 호출 — 시간 경과 점수 감소 처리
+	//HACK: 다른 코드로 변경 가능할 수 있음
 	void OnEverySecond();
 	
 	/*
