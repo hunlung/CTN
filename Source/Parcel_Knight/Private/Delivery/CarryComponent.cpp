@@ -3,6 +3,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Delivery/DeliveryBox.h"
+#include "Delivery/Carryable.h"
 
 UCarryComponent::UCarryComponent()
 {
@@ -37,6 +38,14 @@ void UCarryComponent::PickUpBox(AActor* InBox)
 void UCarryComponent::DropBox()
 {
 	if (!CurrentCarryingBox) return;
+
+	if (GetOwner()->HasAuthority())
+	{
+		if (ICarryable* Carryable = Cast<ICarryable>(CurrentCarryingBox))
+		{
+			Carryable->OnDropped();
+		}
+	}
 
 	CurrentCarryingBox->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 

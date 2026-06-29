@@ -67,11 +67,18 @@ void UInteractionComponent::PrimaryInteract()
 	ICarryable* CarryableTarget = Cast<ICarryable>(CurrentFocusedActor);
 	if (CarryableTarget && CarryableTarget->CanCarry(OwnerCharacter))
 	{
-		CarryableTarget->OnPickedUp(OwnerCharacter);
-
-		if (UCarryComponent* CarryComp = OwnerCharacter->FindComponentByClass<UCarryComponent>())
+		if (OwnerCharacter->HasAuthority())
 		{
-			CarryComp->PickUpBox(CurrentFocusedActor);
+			CarryableTarget->OnPickedUp(OwnerCharacter);
+
+			if (UCarryComponent* CarryComp = OwnerCharacter->FindComponentByClass<UCarryComponent>())
+			{
+				CarryComp->PickUpBox(CurrentFocusedActor);
+			}
+		}
+		else
+		{
+			Server_RequestPrimaryInteract(CurrentFocusedActor);
 		}
 	}
 }

@@ -12,7 +12,7 @@ void UPhysicsJudgeManager::EvaluateImpact(ADeliveryBox* Box, float ImpactForce)
 	{
 		Box->AddStateTag(FGameplayTag::RequestGameplayTag(TEXT("Box.State.Damaged")));
 		
-		UE_LOG(LogTemp, Warning, TEXT("[Server] 서버 판정: 택배 ID %d번이 %f의 충격(임계값: %f)으로 파손되었습니다!"), 
+		UE_LOG(LogDelivery, Warning, TEXT("[Server] Box ID %d was damaged by impact force of %f (Threshold: %f)!"), 
 			Box->GetBoxID(), ImpactForce, DamageThreshold);
 	}
 }
@@ -22,5 +22,14 @@ void UPhysicsJudgeManager::EvaluateTrapImpact(ADeliveryBox* Box, float TrapImpac
 	if (!Box) return;
 	if (GetWorld() && GetWorld()->GetNetMode() == NM_Client) return;
 
-	UE_LOG(LogTemp, Warning, TEXT("서버 판정: 함정 직접 충격 감지! (대미지: %f)"), TrapImpactForce);
+	float DamageThreshold = Box->GetDamageThreshold();
+	if (TrapImpactForce >= DamageThreshold)
+	{
+		Box->AddStateTag(FGameplayTag::RequestGameplayTag(TEXT("Box.State.Damaged")));
+		UE_LOG(LogDelivery, Warning, TEXT("[Server] Box ID %d was damaged by Trap Impact Force of %f (Threshold: %f)!"), Box->GetBoxID(), TrapImpactForce, DamageThreshold);
+	}
+	else
+	{
+		UE_LOG(LogDelivery, Log, TEXT("[Server] Box ID %d hit by Trap but force %f was below threshold %f."), Box->GetBoxID(), TrapImpactForce, DamageThreshold);
+	}
 }
