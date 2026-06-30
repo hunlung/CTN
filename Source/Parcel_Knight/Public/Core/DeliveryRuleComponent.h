@@ -45,9 +45,10 @@ private:
 	UPROPERTY()
 	int32 DecreaseScore;
 	
-	UPROPERTY()
 	//제한 시간 초과 시 감소되는 점수
+	UPROPERTY()
 	int32 TimeUpScore;
+	
 	// 1초 반복 타이머 핸들 — 시간 경과에 따른 점수 감소용
 	FTimerHandle RoundTimerHandle;
 
@@ -59,8 +60,7 @@ private:
 	void OnEverySecond();
 	
 	/*
-	 * [Server Only] 제한시간 만료 시 호출 — 점수 대폭 감소
-	 *  HACK: 제한시간 만료시 라운드 종료 or 점수 대폭 감소 
+	 * [Server Only] 제한시간 만료 시 호출 — 점수 대폭 감소 및 라운드 종료
 	*/
 	void OnTimeUp();
 };
