@@ -18,18 +18,23 @@ void UTeamScoreComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
 void UTeamScoreComponent::OnRep_TeamScore()
 {
+	//TODO: UI작업 BroadCast(3단계)
 }
 
 void UTeamScoreComponent::AddTeamScore(int32 Amount)
 {
-	if (!GetOwner()->HasAuthority()) return;
-	TeamScore = FMath::Max(0, TeamScore + Amount);
+	if (GetOwner()->HasAuthority())
+	{
+		TeamScore += Amount;
+	}
 }
 
 void UTeamScoreComponent::DecreaseRemainingTime(float Amount)
 {
-	if (!GetOwner()->HasAuthority()) return;
-	RemainingTime = FMath::Max(0.0f, RemainingTime - Amount);
+	if (GetOwner()->HasAuthority())
+	{
+		RemainingTime += Amount;
+	}
 }
 
 
