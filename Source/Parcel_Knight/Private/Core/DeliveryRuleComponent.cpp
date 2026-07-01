@@ -4,6 +4,7 @@
 
 #include "Core/ParcelGameState.h"
 #include "Core/TeamScoreComponent.h"
+#include "GameFramework/GameMode.h"
 
 UDeliveryRuleComponent::UDeliveryRuleComponent()
 {
@@ -65,4 +66,10 @@ void UDeliveryRuleComponent::OnTimeUp()
 {
 	GetWorld()->GetGameState<AParcelGameState>()
 	          ->GetTeamScoreComponent()->AddTeamScore(-TimeUpScore);
+	
+	//GameMode의 EndMatch()를 호출해서 매치 종료
+	if (AGameMode* GM = GetOwner<AGameMode>())
+	{
+		GM->EndMatch();
+	}
 }

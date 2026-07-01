@@ -18,14 +18,23 @@ void UTeamScoreComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 
 void UTeamScoreComponent::OnRep_TeamScore()
 {
+	//TODO: UI작업 BroadCast(3단계)
 }
 
 void UTeamScoreComponent::AddTeamScore(int32 Amount)
 {
+	if (GetOwner()->HasAuthority())
+	{
+		TeamScore += Amount;
+	}
 }
 
 void UTeamScoreComponent::DecreaseRemainingTime(float Amount)
 {
+	if (GetOwner()->HasAuthority())
+	{
+		RemainingTime += Amount;
+	}
 }
 
 
