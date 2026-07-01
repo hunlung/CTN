@@ -22,10 +22,14 @@ void UTeamScoreComponent::OnRep_TeamScore()
 
 void UTeamScoreComponent::AddTeamScore(int32 Amount)
 {
+	if (!GetOwner()->HasAuthority()) return;
+	TeamScore = FMath::Max(0, TeamScore + Amount);
 }
 
 void UTeamScoreComponent::DecreaseRemainingTime(float Amount)
 {
+	if (!GetOwner()->HasAuthority()) return;
+	RemainingTime = FMath::Max(0.0f, RemainingTime - Amount);
 }
 
 

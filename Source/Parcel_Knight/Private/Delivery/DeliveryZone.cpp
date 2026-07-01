@@ -4,6 +4,10 @@
 #include "Delivery/DeliveryBox.h"
 #include "Delivery/PhysicsJudgeManager.h"
 #include "Delivery/DeliverySubsystem.h"
+#include "Core/ParcelGameState.h"
+#include "Core/TeamScoreComponent.h"
+#include "Core/ParcelPlayerState.h"
+#include "GameFramework/Controller.h"
 
 ADeliveryZone::ADeliveryZone()
 {
@@ -60,21 +64,46 @@ void ADeliveryZone::ProcessDelivery(AActor* InBox)
 	else if (ZoneType == EDestinationType::ZoneC && BoxType.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("Box.Type.ZoneC")))) bIsCorrectZone = true;
 	else if (ZoneType == EDestinationType::Emergency && BoxType.MatchesTag(FGameplayTag::RequestGameplayTag(TEXT("Box.Type.Emergency")))) bIsCorrectZone = true;
 
+	int32 ScoreChange = bIsCorrectZone ? Data.BaseScore : Data.DamagePenalty;
+
 	if (bIsCorrectZone)
 	{
-		UE_LOG(LogDelivery, Log, TEXT("[Server] Success: Delivered to the correct zone! Score +%d"), Data.BaseScore);
+		UE_LOG(LogDelivery, Log, TEXT("[Server] Success: Delivered to the correct zone! Score +%d"), ScoreChange);
 		Box->AddStateTag(FGameplayTag::RequestGameplayTag(TEXT("Box.State.Delivered")));
-		
-		// Todo: 게임모드 팀원에게 점수 반영 함수 호출 연동
-		// GetAuthGameMode()->AddTeamScore(Data.BaseScore);
 	}
 	else
 	{
-		UE_LOG(LogDelivery, Warning, TEXT("[Server] Fail: Delivered to the wrong zone! Penalty %d"), Data.DamagePenalty);
+		UE_LOG(LogDelivery, Warning, TEXT("[Server] Fail: Delivered to the wrong zone! Penalty %d"), ScoreChange);
 		Box->AddStateTag(FGameplayTag::RequestGameplayTag(TEXT("Box.State.Failed")));
-		
-		// Todo: 감점 처리 연동
-		// GetAuthGameMode()->AddTeamScore(Data.DamagePenalty);
+	}
+
+	// 1. 팀 점수 반영 (AParcelGameState -> UTeamScoreComponent)
+	if (AParcelGameState* GameState = GetWorld()->GetGameState<AParcelGameState>())
+	{
+		if (UTeamScoreComponent* TeamScoreComp = GameState->GetTeamScoreComponent())
+		{
+			TeamScoreComp->AddTeamScore(ScoreChange);
+		}
+	}
+
+	// 2. 개인 플레이어 점수 및 콤보 반영 (AParcelPlayerState -> UPlayerStatComponent)
+	if (APawn* CarrierPawn = Cast<APawn>(Box->GetOwner()))
+	{
+		if (AController* CarrierController = CarrierPawn->GetController())
+		{
+			if (AParcelPlayerState* PlayerState = CarrierController->GetPlayerState<AParcelPlayerState>())
+			{
+				PlayerState->AddScore(ScoreChange);
+				if (bIsCorrectZone)
+				{
+					PlayerState->OnDeliverySuccess();
+				}
+				else
+				{
+					PlayerState->OnDeliveryFail();
+				}
+			}
+		}
 	}
 
 	// 사용 완료된 상자는 디스폰 서브시스템을 통해 깔끔하게 삭제

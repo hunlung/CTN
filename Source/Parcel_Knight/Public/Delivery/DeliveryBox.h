@@ -4,8 +4,10 @@
 #include "GameFramework/Actor.h"
 #include "GameplayTagContainer.h"
 #include "DeliveryTypes.h"
+#include "Core/HealthInterface.h"
 #include "Delivery/Carryable.h"
 #include "DeliveryBox.generated.h"
+
 
 class UBoxComponent;
 class UStaticMeshComponent;
