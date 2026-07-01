@@ -8,6 +8,7 @@
 
 class AParcelPlayerController;
 class AParcelPlayerState;
+class AParcelCharacter;
 class UDeliveryRuleComponent;
 class AParcelGameState;
 

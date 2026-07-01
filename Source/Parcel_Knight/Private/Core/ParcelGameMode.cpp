@@ -2,6 +2,7 @@
 
 #include "Core/ParcelGameMode.h"
 
+#include "Character/ParcelCharacter.h"
 #include "Core/DeliveryRuleComponent.h"
 #include "Core/ParcelGameState.h"
 #include "Core/ParcelPlayerController.h"
@@ -12,9 +13,10 @@ AParcelGameMode::AParcelGameMode()
 	GameStateClass = AParcelGameState::StaticClass();
 	PlayerStateClass = AParcelPlayerState::StaticClass();
 	PlayerControllerClass = AParcelPlayerController::StaticClass();
-	
+	DefaultPawnClass = AParcelCharacter::StaticClass();
+
 	DeliveryRuleComp = CreateDefaultSubobject<UDeliveryRuleComponent>("DeliveryRuleComponent");
-	
+
 }
 
 void AParcelGameMode::PostLogin(APlayerController* NewPlayer)
