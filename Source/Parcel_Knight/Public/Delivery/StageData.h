@@ -17,7 +17,9 @@ struct FStageBoxSpawnInfo
 	int32 SpawnCount = 1;
 };
 
-/** Primary Data Asset */
+
+
+// Primary Data Asset
 
 UCLASS(BlueprintType)
 class PARCEL_KNIGHT_API UStageData : public UPrimaryDataAsset

@@ -1,11 +1,13 @@
 #pragma once
 
+#define DELIVERY_LOG(Category, Verbosity, Format, ...) UE_LOG(Category, Verbosity, Format, ##__VA_ARGS__)
+
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "GameplayTagContainer.h"
 #include "DeliveryTypes.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN(LogDelivery, Log, All);
+DECLARE_LOG_CATEGORY_EXTERN(LogParcelDelivery, Log, All);
 
 class UStaticMesh;
 
